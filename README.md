@@ -9,7 +9,7 @@ Key Benefits & features:
 - Glasso loss functions: The loss is the logdet objective of the graphical lasso `1/M(-1*log|theta|+ <S, theta>)`, where `M=num_samples, S=input covariance matrix, theta=predicted precision matrix`.  
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
-## uGLAD architecture
+### uGLAD architecture: Unrolled deep model  
 <!-- ![uGLAD architecture: Unrolled deep model](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG =20x80)    -->
 
 <!-- <object data="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf" type="application/pdf" width="700px" height="700px">
