@@ -1,7 +1,7 @@
 ## uGLAD  
 An unsupervised deep learning model to recover sparse graphs. This work proposes `uGLAD` which is a unsupervised version of a previous `GLAD` model (GLAD: Learning Sparse Graph Recovery (ICLR 2020 - [link](<https://openreview.net/forum?id=BkxpMTEtPB>)).  
 
-Key Benefits & features:  
+Key benefits & features:  
 - Solution to Graphical Lasso: A better alternative to solve the Graphical Lasso problem as
     - GPU based acceleration can be leveraged
     - Requires less number of iterations to converge due to neural network based acceleration of the unrolled optimization algorithm (Alternating Minimization).  
