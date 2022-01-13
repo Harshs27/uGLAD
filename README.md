@@ -3,9 +3,10 @@ An unsupervised deep learning model to recover sparse graphs. This work proposes
 
 Key benefits & features:  
 - Solution to Graphical Lasso: A better alternative to solve the Graphical Lasso problem as
-    - GPU based acceleration can be leveraged
-    - Requires less number of iterations to converge due to neural network based acceleration of the unrolled optimization algorithm (Alternating Minimization).  
-    - No need to pre-specify the sparsity related regularization hyperparameters. uGLAD models them using neural networks and are optimized for the glasso loss function.  
+    - The neural networks of the uGLAD enable adaptive choices of the hyperparameters which leads to better performance than the existing algorithms  
+     - No need to pre-specify the sparsity related regularization hyperparameters  
+    - Requires less number of iterations to converge due to neural network based acceleration of the unrolled optimization algorithm (Alternating Minimization)    
+    - GPU based acceleration can be leveraged  
 - Glasso loss function: The loss is the logdet objective of the graphical lasso `1/M(-1*log|theta|+ <S, theta>)`, where `M=num_samples, S=input covariance matrix, theta=predicted precision matrix`.  
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
