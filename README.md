@@ -10,13 +10,13 @@ Key Benefits & features:
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
 ## GLAD architecture
-![GLAD architecture](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf?raw=true)  
+![GLAD architecture](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG?raw=true)  
 
-<object data="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf" type="application/pdf" width="700px" height="700px">
+<!-- <object data="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf">
         <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf">Download PDF</a>.</p>
     </embed>
-</object>
+</object> -->
 
 ## Setup  
 The `setup.sh` file contains the complete procedure of creating a conda environment to run mGLAD model. run `bash setup.sh`    
