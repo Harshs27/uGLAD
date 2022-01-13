@@ -10,13 +10,19 @@ Key Benefits & features:
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
 ## uGLAD architecture
-![uGLAD architecture: Unrolled deep model](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG =20x80)  
+![uGLAD architecture: Unrolled deep model](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG =20x80)   
 
 <!-- <object data="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf">
         <p>This browser does not support PDFs. Please download the PDF to view it: <a href="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf">Download PDF</a>.</p>
     </embed>
 </object> -->
+
+<img src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG" width="20" height="80" title="uGLAD architecture: Unrolled deep model" />  
+
+<img src=".images/architecture.PNG" width="200" height="200" />  
+
+<img src=".images/architecture.PNG" alt="drawing" width="200"/>  
 
 ## Setup  
 The `setup.sh` file contains the complete procedure of creating a conda environment to run mGLAD model. run `bash setup.sh`    
