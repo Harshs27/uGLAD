@@ -10,7 +10,7 @@ Key Benefits & features:
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
 ## uGLAD architecture
-![uGLAD architecture: Unrolled deep model](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG?raw=true width="300px" height="700px")  
+![uGLAD architecture: Unrolled deep model](https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG?raw=true =20x80)  
 
 <!-- <object data="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf" type="application/pdf" width="700px" height="700px">
     <embed src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.pdf">
