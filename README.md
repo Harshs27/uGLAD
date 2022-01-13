@@ -29,7 +29,7 @@ The `setup.sh` file contains the complete procedure of creating a conda environm
 In case of dependencies conflict, one can alternatively use this command `conda env create --name uGLAD --file=environment.yml`.  
 
 ## demo-uGLAD notebook  
-A minimalist working example of uGLAD. It is a good entry point to understand the code structure as well as the GLAD model.  
+A minimalist working example of uGLAD. It is a good entry point to understand the code structure as well as the uGLAD model.  
 
 ## Citation
 If you find this method useful, kindly cite the following 2 associated papers:
