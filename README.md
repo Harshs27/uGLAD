@@ -19,7 +19,7 @@ Key benefits & features:
     </embed>
 </object> -->
 
-<img src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG" width="100" title="uGLAD architecture: Unrolled deep model" /> <img src="https://github.com/Harshs27/uGLAD/blob/main/.images/nn-architecture1.PNG" width="300" title="uGLAD architecture: Neural Network details" /> 
+<img src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG" width="100" title="uGLAD architecture: Unrolled deep model" />              <img src="https://github.com/Harshs27/uGLAD/blob/main/.images/nn-architecture1.PNG" width="300" title="uGLAD architecture: Neural Network details" /> 
 
 <!-- <img src=".images/architecture.PNG" width="200" height="200" />  
 
