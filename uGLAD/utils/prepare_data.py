@@ -25,7 +25,7 @@ def eigVal_conditionNum(A):
     return eig, condition_number
 
 
-def getCovariance(Xb, offset = 0.1):
+def getCovariance(Xb, offset=0.1):
     """Calculate the batch covariance matrix 
 
     Args:

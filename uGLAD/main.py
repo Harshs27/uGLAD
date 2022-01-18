@@ -24,22 +24,46 @@ class uGLAD_GL(object):
         self.covariance_ = None
         self.precision_ = None
         
-    def fit(self, X, centered=False):
+    def fit(
+        self, 
+        X, 
+        true_theta=None, 
+        centered=False, 
+        epochs=250, 
+        verbose=True
+        ):
         """Takes in the samples X and returns
         a uGLAD model which stores the corresponding
         covariance and precision matrices.
         
         Args:
             X (2D np array): num_samples x dimension
+            true_theta (2D np array): dim x dim of the 
+                true precision matrix
             centered (bool): Whether samples are mean 
                 adjusted or not. True/False
+            epochs (int): Training epochs
+            verbose (bool): Print training output
         """
         X = np.array(X)
         # Running the uGLAD model
-        Xb = X.reshape(1, X.shape[0], X.shape[1])
-        pred_theta = run_uGLAD(Xb, EPOCHS=250, VERBOSE=True)
+        M, D = X.shape
+        # Reshaping due to GLAD algorithm requirements
+        Xb = X.reshape(1, M, D)
+        true_theta_b = None
+        if true_theta is not None:
+            true_theta_b = true_theta.reshape(1, D, D)
+        pred_theta = run_uGLAD(
+            Xb,
+            trueTheta=true_theta_b,
+            EPOCHS=epochs, 
+            VERBOSE=verbose
+            )
         # np.dot((X-mu)T, (X-mu)) / X.shape[0]
-        self.covariance_ = covariance.empirical_covariance(X, assume_centered=centered)
+        self.covariance_ = covariance.empirical_covariance(
+            X,
+            assume_centered=centered
+            )
         self.precision_ = pred_theta[0].detach().numpy()
 
 #####################################################################
@@ -52,7 +76,8 @@ def get_data(
     batch_size=1,
     # typeG='RANDOM', 
     w_min=0.5, 
-    w_max=1.0
+    w_max=1.0,
+    eig_offset=0.1, 
     ):
     """Prepare true adj matrices as theta and then sample from 
     Gaussian to get the corresponding samples.
@@ -85,6 +110,7 @@ def get_data(
             num_nodes,
             edge_connections,
             num_samples, 
+            u=eig_offset,
             w_min=w_min,
             w_max=w_max
             )
@@ -167,13 +193,15 @@ def loss_uGLAD(theta, S):
     return glasso_loss 
 
 
-def run_uGLAD(Xb, trueTheta=None, EPOCHS=250, VERBOSE=True):
+def run_uGLAD(Xb, trueTheta=None, eval_offset=0.1, EPOCHS=250, VERBOSE=True):
     """Running the uGLAD algorithm.
     
     Args:
         Xb (torch.Tensor BxMxD): The input sample matrix
         trueTheta (torch.Tensor BxDxD): The corresponding 
-            true graphs for reporting metrics.
+            true graphs for reporting metrics
+        eval_offset (float): eigenvalue offset for 
+            covariance matrix adjustment
         EPOCHS (int): The number of training epochs
         VERBOSE (bool): if True, prints to sys.out
 
@@ -181,7 +209,7 @@ def run_uGLAD(Xb, trueTheta=None, EPOCHS=250, VERBOSE=True):
         predTheta (torch.Tensor BxDxD): Predicted graphs
     """
     # Calculating the batch covariance
-    Sb = prepare_data.getCovariance(Xb) # BxDxD
+    Sb = prepare_data.getCovariance(Xb, offset=eval_offset) # BxDxD
     # Converting the data to torch 
     Xb = prepare_data.convertToTorch(Xb, req_grad=False)
     Sb = prepare_data.convertToTorch(Sb, req_grad=False)
@@ -217,6 +245,6 @@ def run_uGLAD(Xb, trueTheta=None, EPOCHS=250, VERBOSE=True):
                     trueTheta[b].detach().numpy(), 
                     predTheta[b].detach().numpy()
                 )
-                print(f'Batch:{b} - {compare_theta}')
+                print(f'Compare - {compare_theta}')
     return predTheta
 ######################################################################
