@@ -76,5 +76,5 @@ def reportMetrics(trueG, G, beta=1):
     # recall 
     recall = TP/(TP+FN)
     return {'FDR': FDR, 'TPR': TPR, 'FPR': FPR, 'SHD': SHD, 'nnzTrue': nnzTrue, 
-            'nnzPred': nnzPred, 'precsion': precision, 'recall': recall, 
+            'nnzPred': nnzPred, 'precision': precision, 'recall': recall, 
             'Fbeta': Fbeta, 'aupr': aupr, 'auc': auc}
