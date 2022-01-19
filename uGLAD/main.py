@@ -193,7 +193,7 @@ def loss_uGLAD(theta, S):
     return glasso_loss 
 
 
-def run_uGLAD(Xb, trueTheta=None, eval_offset=1.0, EPOCHS=250, VERBOSE=True):
+def run_uGLAD(Xb, trueTheta=None, eval_offset=0.1, EPOCHS=250, VERBOSE=True):
     """Running the uGLAD algorithm.
     
     Args:
