@@ -10,10 +10,13 @@ conda install numpy -y;
 conda install pytorch torchvision cudatoolkit=10.2 -c pytorch -y;
 
 # Install packages from conda-forge.
-conda install -c conda-forge scikit-learn matplotlib -y;
+conda install -c conda-forge matplotlib -y;
 
 # Install packages from anaconda.
 conda install -c anaconda pandas networkx scipy -y;
+
+# Install pip packages
+pip3 install -U scikit-learn
 
 # Create environment.yml.
 conda env export > environment.yml;
