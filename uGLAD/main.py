@@ -114,62 +114,6 @@ class uGLAD_GL(object):
 
 #####################################################################
 
-# #################### Functions to generate data #####################
-# def get_data(
-#     num_nodes,
-#     sparsity,
-#     num_samples,
-#     batch_size=1,
-#     # typeG='RANDOM',
-#     w_min=0.5, 
-#     w_max=1.0,
-#     eig_offset=0.1, 
-#     seed=None
-#     ):
-#     """Prepare true adj matrices as theta and then sample from 
-#     Gaussian to get the corresponding samples.
-    
-#     Args:
-#         num_nodes (int): The number of nodes in DAG
-#         num_edges (int): The number of desired edges in DAG
-#         num_samples (int): The number of samples to simulate from DAG
-#         batch_size (int, optional): The number of batches
-#         typeG (str): RANDOM/GRID/CHAIN
-#         w_min (float): Precision matrix entries ~Unif[w_min, w_max]
-#         w_max (float):  Precision matrix entries ~Unif[w_min, w_max]
-#         seed (int): seed for creating edge connections of random graph
-    
-#     Returns:
-#         Xb (torch.Tensor BxMxD): The sample data
-#         trueTheta (torch.Tensor BxDxD): The true precision matrices
-#     """
-#     Xb, trueTheta = [], []
-#     for b in range(batch_size):
-#         # I - Getting the true edge connections
-#         edge_connections = prepare_data.generateRandomGraph(
-#             num_nodes, 
-#             sparsity,
-#             #typeG=typeG, 
-#             seed=seed
-#             )
-#         # II - Gettings samples from fitting a Gaussian distribution
-#         # sample the entry of the matrix 
-        
-#         X, true_theta = prepare_data.simulateGaussianSamples(
-#             num_nodes,
-#             edge_connections,
-#             num_samples, 
-#             u=eig_offset,
-#             w_min=w_min,
-#             w_max=w_max,
-#             seed=None
-#             )
-#         # collect the batch data
-#         Xb.append(X)
-#         trueTheta.append(true_theta)
-#     return np.array(Xb), np.array(trueTheta)
-# ######################################################################
-
 
 #################### Functions to prepare model ######################
 def init_uGLAD(lr, theta_init_offset=1.0, nF=3, H=3):
