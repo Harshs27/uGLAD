@@ -40,7 +40,8 @@ class uGLAD_GL(object):
         INIT_DIAG=0,
         L=15,
         verbose=True, 
-        k_fold=3
+        k_fold=3, 
+        mode='direct'
         ):
         """Takes in the samples X and returns
         a uGLAD model which stores the corresponding
@@ -59,7 +60,10 @@ class uGLAD_GL(object):
             INIT_DIAG (int): 0/1 for initilization strategy of GLAD
             L (int): Num of unrolled iterations of GLAD
             verbose (bool): Print training output
-            k_fold (int): #splits for k-fold CV, runs direct if `0'
+            k_fold (int): num batches in missing mode
+                num splits for k-fold in CV mode, 
+                k=0 will run the direct mode
+            mode (str): direct/cv/missing
 
         Returns:
             compare_theta (dict): Dictionary of comparison metrics
@@ -74,9 +78,9 @@ class uGLAD_GL(object):
         true_theta_b = None
         if true_theta is not None:
             true_theta_b = true_theta.reshape(1, D, D)
-        if k_fold==0:
-            print(f'Direct Mode')
-            pred_theta, compare_theta, model_glad = run_uGLAD_direct(
+        if mode=='missing':
+            print(f'Handling missing data')
+            pred_theta, compare_theta, model_glad = run_uGLAD_missing(
                 Xb,
                 trueTheta=true_theta_b,
                 eval_offset=eval_offset,
@@ -85,8 +89,9 @@ class uGLAD_GL(object):
                 INIT_DIAG=INIT_DIAG,
                 L=L,
                 VERBOSE=verbose, 
+                K_batch=k_fold 
                 )
-        elif k_fold>0:
+        elif mode=='cv' and k_fold>=0:
             print(f'CV mode: {k_fold}-fold')
             pred_theta, compare_theta, model_glad = run_uGLAD_CV(
                 Xb,
@@ -99,8 +104,20 @@ class uGLAD_GL(object):
                 VERBOSE=verbose, 
                 k_fold=k_fold
                 )
+        elif mode=='direct':
+            print(f'Direct Mode')
+            pred_theta, compare_theta, model_glad = run_uGLAD_direct(
+                Xb,
+                trueTheta=true_theta_b,
+                eval_offset=eval_offset,
+                EPOCHS=epochs, 
+                lr=lr,
+                INIT_DIAG=INIT_DIAG,
+                L=L,
+                VERBOSE=verbose, 
+                )
         else:
-            print(f'ERROR Please enter K-fold value in valid range [0, ), currently entered {k_fold}')
+            print(f'ERROR Please enter K-fold value in valid range [0, ), currently entered {k_fold}; Check mode {mode}')
             sys.exit(0)
         # np.dot((X-mu)T, (X-mu)) / X.shape[0]
         self.covariance_ = covariance.empirical_covariance(
@@ -203,8 +220,8 @@ def run_uGLAD_direct(
     """Running the uGLAD algorithm in direct mode
     
     Args:
-        Xb (torch.Tensor BxMxD): The input sample matrix
-        trueTheta (torch.Tensor BxDxD): The corresponding 
+        Xb (torch.Tensor 1xMxD): The input sample matrix
+        trueTheta (torch.Tensor 1xDxD): The corresponding 
             true graphs for reporting metrics
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
@@ -215,7 +232,7 @@ def run_uGLAD_direct(
         VERBOSE (bool): if True, prints to sys.out
 
     Returns:
-        predTheta (torch.Tensor BxDxD): Predicted graphs
+        predTheta (torch.Tensor 1xDxD): Predicted graphs
         compare_theta (dict): returns comparison metrics if 
             true precision matrix is provided
         model_glad (class object): Returns the learned glad model
@@ -284,8 +301,8 @@ def run_uGLAD_CV(
     model using 5-fold CV. 
     
     Args:
-        Xb (torch.Tensor BxMxD): The input sample matrix
-        trueTheta (torch.Tensor BxDxD): The corresponding 
+        Xb (torch.Tensor 1xMxD): The input sample matrix
+        trueTheta (torch.Tensor 1xDxD): The corresponding 
             true graphs for reporting metrics
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
@@ -297,11 +314,12 @@ def run_uGLAD_CV(
         k_fold (int): #splits for k-fold CV
 
     Returns:
-        predTheta (torch.Tensor BxDxD): Predicted graphs
+        predTheta (torch.Tensor 1xDxD): Predicted graphs
         compare_theta (dict): returns comparison metrics if 
             true precision matrix is provided
         model_glad (class object): Returns the learned glad model
     """
+    # Batch size is fixed to 1
     Sb = prepare_data.getCovariance(Xb, offset=eval_offset)
     Sb = prepare_data.convertToTorch(Sb, req_grad=False)
     # Splitting into k-fold for cross-validation 
@@ -401,6 +419,173 @@ def run_uGLAD_CV(
             )
         print(f'Comparison - {compare_theta}')
     return predTheta, compare_theta, model_glad
+
+
+def run_uGLAD_missing(
+    Xb, 
+    trueTheta=None, 
+    eval_offset=0.1, 
+    EPOCHS=250,
+    lr=0.002,
+    INIT_DIAG=0,
+    L=15,
+    VERBOSE=True,
+    K_batch=3
+    ):
+    """Running the uGLAD algorithm in missing data mode. We do a
+    row-subsample of the input data and then train using multi-task
+    learning approach to obtain the final precision matrix.
+    
+    Args:
+        Xb (torch.Tensor 1xMxD): The input sample matrix with 
+            missing entries as np.NaNs
+        trueTheta (torch.Tensor 1xDxD): The corresponding 
+            true graphs for reporting metrics
+        eval_offset (float): eigenvalue offset for 
+            covariance matrix adjustment
+        EPOCHS (int): The number of training epochs
+        lr (float): Learning rate of glad for the adam optimizer
+        INIT_DIAG (int): 0/1 for initilization strategy of GLAD
+        L (int): Num of unrolled iterations of GLAD
+        VERBOSE (bool): if True, prints to sys.out
+        K_batch (int): number of row-sumsampled batch for 
+            multi-task learning (For less conflict in deciding the
+            sign of final precision matrix, choose K as a odd value)
+
+    Returns:
+        predTheta (torch.Tensor 1xDxD): Predicted graphs
+        compare_theta (dict): returns comparison metrics if 
+            true precision matrix is provided
+        model_glad (class object): Returns the learned glad model
+    """
+    # Batch size is fixed to 1
+    if K_batch == 0: K_batch = 3  # setting the default
+    # Step I:  Do statistical mean imputation
+    Xb = mean_imputation(Xb)
+
+    # Step II: Getting the batches and preparing data for uGLAD
+    Sb = prepare_data.getCovariance(Xb, offset=eval_offset)
+    Sb = prepare_data.convertToTorch(Sb, req_grad=False)
+    # Splitting into k-fold for getting row-subsampled batches
+    kf = KFold(n_splits=K_batch)
+    print(f'Creating K={K_batch} row-subsampled batches')
+    # Collect all the subsample in batch form: K x M' x D
+    X_K = np.array([Xb[0][Idx] for Idx, _ in kf.split(Xb[0])])
+    # Calculating the batch covariance
+    S_K = prepare_data.getCovariance(X_K, offset=eval_offset) # BxDxD
+    # Converting the data to torch 
+    S_K = prepare_data.convertToTorch(S_K, req_grad=False)
+    # Initialize the model and prepare theta if provided
+    if trueTheta is not None:
+        trueTheta = prepare_data.convertToTorch(
+            trueTheta,
+            req_grad=False
+            )
+    # model and optimizer for uGLAD
+    model_glad, optimizer_glad = init_uGLAD(
+        lr=lr,
+        theta_init_offset=1.0,
+        nF=3,
+        H=3
+        )
+
+    # STEP III: Optimizing for the glasso loss
+    PRINT_EVERY = int(EPOCHS/10)
+    # print max 10 times per training
+    for e in range(EPOCHS):      
+        # reset the grads to zero
+        optimizer_glad.zero_grad()
+        # calculate the loss and precision matrix
+        predTheta, loss = forward_uGLAD(
+            S_K, 
+            model_glad,
+            L=L,
+            INIT_DIAG=INIT_DIAG
+            )
+        # calculate the backward gradients
+        loss.backward()
+        # updating the optimizer params with the grads
+        optimizer_glad.step()
+        # Printing output
+        _loss = loss.detach().numpy()
+        if not e%PRINT_EVERY and VERBOSE: print(f'epoch:{e}/{EPOCHS} loss:{_loss}')
+
+    # STEP IV: Getting the final precision matrix
+    print(f'Getting the final precision matrix using the consensus strategy')
+    predTheta = get_final_precision_from_batch(predTheta, type='min')
+        
+    # reporting the metrics if true theta is provided
+    compare_theta = None
+    if trueTheta is not None: 
+        compare_theta = reportMetrics(
+            trueTheta[0].detach().numpy(), 
+            predTheta[0].detach().numpy()
+        )
+        print(f'Comparison - {compare_theta}')
+
+    return predTheta, compare_theta, model_glad
+
+def mean_imputation(Xb):
+    """Replace nans of the input data by column
+    means
+
+    Args:
+        Xb (torch.Tensor 1xMxD): The input sample matrix with 
+            missing entries as np.NaNs
+    
+    Returns:
+        Xb (torch.Tensor 1xMxD): Mean imputed matrix
+    """
+    Xb = Xb[0]
+    # Mean of columns (ignoring NaNs) 
+    col_mean = np.nanmean(Xb, axis=0)
+    #Find indices that you need to replace
+    inds = np.where(np.isnan(Xb))
+    # Place column means in the indices. Align the arrays using take
+    Xb[inds] = np.take(col_mean, inds[1])
+    # Check if any column is full of NaNs, raise sys.exit()
+    if np.isnan(np.sum(Xb)):
+        print(f'ERROR: One or more columns have all NaNs')
+        sys.exit(0)
+    # Reshaping Xb with an extra dimension for compatability with glad
+    Xb = np.expand_dims(Xb, axis=0)
+    return Xb
+
+def get_final_precision_from_batch(predTheta, type='min'):
+    """The predTheta contains a batch of K precision 
+    matrices. This function calculates the final 
+    precision matrix by following the consensus 
+    strategy
+
+    \Theta^{f}_{i,j} = max-count(sign(\Theta^K_{i,j})) 
+                        * min/mean{|\Theta^K_{i,j}|}
+    (`min` is the recommended setting) 
+    
+    Args:
+        predTheta (torch.Tensor KxDxD): Predicted graphs
+            with batch_size = K
+        type (str): min/mean to get the entry values
+
+    Returns:
+        predTheta (torch.Tensor 1xDxD): Final precision matrix
+    """
+    K, _, D = predTheta.shape
+    # get the value term
+    if type=='min':
+        value_term = torch.min(torch.abs(predTheta), 0)[0]
+    elif type=='mean':
+        value_term = torch.mean(torch.abs(predTheta), 0)[0]
+    else:
+        print(f'Enter valid type min/mean, currently {type}')
+        sys.exit(0)
+    # get the sign term
+    max_count_sign = torch.sum(torch.sign(predTheta), 0)
+    # If sign is 0, then assign +1 
+    max_count_sign[max_count_sign>=0] = 1
+    max_count_sign[max_count_sign<0] = -1
+    # Get the final precision matrix
+    predTheta = max_count_sign * value_term
+    return predTheta.reshape(1, D, D)
 ######################################################################
 
 # DO NOT USE 

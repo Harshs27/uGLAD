@@ -53,6 +53,36 @@ def get_data(
         Xb.append(X)
         trueTheta.append(true_theta)
     return np.array(Xb), np.array(trueTheta)
+
+def add_noise_dropout(Xb, dropout=0.25):
+    """ Add the dropout noise to the input data.
+
+    Args:
+        Xb (torch.Tensor BxMxD): The sample data
+        dropout (float): [0, 1) The percentage of 
+            values to be replaced by NaNs 
+
+    Returns:
+        Xb_miss (torch.Tensor BxMxD): The sample with dropout
+    """
+    B, M, D = Xb.shape
+    Xb_miss = []  # collect the noisy data
+    for b in range(B):
+        X = Xb[b].copy()  # M x D
+        # Unroll X to 1D array: M*D
+        X = X.reshape(-1)
+        # Get the indices to mask/add noise
+        mask_indices = np.random.choice(
+            np.arange(X.size), 
+            replace=False,
+            size=int(X.size * dropout)
+        )
+        # Introduce missing values as NaNs
+        X[mask_indices] = np.NaN
+        # Reshape into the original dimensions
+        X = X.reshape(M, D)
+        Xb_miss.append(X)
+    return np.array(Xb_miss)
 ######################################################################
 
 
