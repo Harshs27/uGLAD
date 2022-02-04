@@ -8,6 +8,7 @@ Key benefits & features:
     - Requires less number of iterations to converge due to neural network based acceleration of the unrolled optimization algorithm (Alternating Minimization)    
     - GPU based acceleration can be leveraged  
     - Novel `consensus` strategy which robustly handles missing values by leveraging the multi-task learning ability of the model   
+    - Multi-task learning mode that solves the graphical lasso objective to recover multiple graphs with a single `uGLAD` model  
 - Glasso loss function: The loss is the logdet objective of the graphical lasso `1/M(-1*log|theta|+ <S, theta>)`, where `M=num_samples, S=input covariance matrix, theta=predicted precision matrix`.  
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
