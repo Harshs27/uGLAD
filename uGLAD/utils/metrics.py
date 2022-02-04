@@ -96,3 +96,4 @@ def summarize_compare_theta(compare_dict_list, method_name='Method Name'):
     print(f'Avg results for {method_name}\n')
     pprint(avg_results)
     print(f'\nTotal runs {total_runs}\n\n')
+    return avg_results
