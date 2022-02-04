@@ -746,13 +746,12 @@ def run_uGLAD_multitask(
     compare_theta = []
     if trueTheta is not None: 
         for b in range(K):
-            compare_theta.append(
-                reportMetrics(
+            rM = reportMetrics(
                     trueTheta[b].detach().numpy(), 
                     predTheta[b].detach().numpy()
                 )
-            )
-            print(f'Comparison {b} - {compare_theta}\n')
+            print(f'Metrics for graph {b}: {rM}\n')
+            compare_theta.append(rM)
     return predTheta, compare_theta, model_glad
 ######################################################################
 
