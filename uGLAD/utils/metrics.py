@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn import metrics
+from pprint import pprint
 
 def get_auc(y, scores):
     y = np.array(y).astype(int)
@@ -78,3 +79,20 @@ def reportMetrics(trueG, G, beta=1):
     return {'FDR': FDR, 'TPR': TPR, 'FPR': FPR, 'SHD': SHD, 'nnzTrue': nnzTrue, 
             'nnzPred': nnzPred, 'precision': precision, 'recall': recall, 
             'Fbeta': Fbeta, 'aupr': aupr, 'auc': auc}
+
+def summarize_compare_theta(compare_dict_list, method_name='Method Name'):
+    avg_results = {}
+    for key in compare_dict_list[0].keys():
+        avg_results[key] = []
+    
+    total_runs = len(compare_dict_list)
+    for cd in compare_dict_list:
+        for key in cd.keys():
+            avg_results[key].append(cd[key])
+    # getting the mean and std dev
+    for key in avg_results.keys():
+        avk = avg_results[key]
+        avg_results[key] = (np.mean(avk), np.std(avk))
+    print(f'Avg results for {method_name}\n')
+    pprint(avg_results)
+    print(f'\nTotal runs {total_runs}\n\n')

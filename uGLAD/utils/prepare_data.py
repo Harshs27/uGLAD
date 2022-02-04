@@ -18,9 +18,9 @@ def get_data(
     Gaussian to get the corresponding samples.
     
     Args:
-        num_nodes (int): The number of nodes in DAG
-        num_edges (int): The number of desired edges in DAG
-        num_samples (int): The number of samples to simulate from DAG
+        num_nodes (int): The number of nodes in graph
+        sparsity ([float, float]): The [min, max] probability of edges
+        num_samples (int): The number of samples to simulate
         batch_size (int, optional): The number of batches
         typeG (str): RANDOM/GRID/CHAIN
         w_min (float): Precision matrix entries ~Unif[w_min, w_max]
@@ -138,17 +138,19 @@ def generateRandomGraph(num_nodes, sparsity, seed=None):
     sparsity. 
 
     Args:
-        num_nodes (int): The number of nodes in the DAG
-        sparsity (float): = #edges-present/#total-edges
+        num_nodes (int): The number of nodes in the graph
+        sparsity ([float, float]): The [min, max] probability of edges
         seed (int, optional): set the numpy random seed
 
     Returns:
         edge_connections (2D np array (float)): Adj matrix
     """
-    if seed: np.random.seed(seed)
+    # if seed: np.random.seed(seed)
+    min_s, max_s = sparsity
+    s =  np.random.uniform(min_s, max_s, 1)[0]
     G = nx.generators.random_graphs.gnp_random_graph(
         num_nodes, 
-        sparsity, 
+        s, 
         seed=seed, 
         directed=False
     )

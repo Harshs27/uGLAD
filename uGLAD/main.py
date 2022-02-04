@@ -67,6 +67,7 @@ class uGLAD_GL(object):
 
         Returns:
             compare_theta (dict): Dictionary of comparison metrics
+                between the predicted and true precision matrix
         """
         print(f'Running uGLAD')
         start = time()
@@ -129,6 +130,81 @@ class uGLAD_GL(object):
         print(f'Total runtime: {time()-start} secs\n')
         return compare_theta
 
+
+class uGLAD_multitask(object):
+    def __init__(self):
+        """Initializing the uGLAD model in multi-task
+        mode. It saves the covariance and predicted
+        precision matrices for the input batch of data
+        """
+        super(uGLAD_multitask, self).__init__()
+        self.covariance_ = []
+        self.precision_ = []
+        self.model_glad = None
+        
+    def fit(
+        self, 
+        Xb, 
+        true_theta_b=None, 
+        eval_offset=0.1,
+        centered=False, 
+        epochs=250, 
+        lr=0.002,
+        INIT_DIAG=0,
+        L=15,
+        verbose=True, 
+        ):
+        """Takes in the samples X and returns
+        a uGLAD model which stores the corresponding
+        covariance and precision matrices.
+        
+        Args:
+            X (3D np array): batch x num_samples x dimension
+            true_theta (3D np array): batch x dim x dim of the 
+                true precision matrix
+            eval_offset (float): eigenval adjustment in
+                case the cov is ill-conditioned
+            centered (bool): Whether samples are mean 
+                adjusted or not. True/False
+            epochs (int): Training epochs
+            lr (float): Learning rate of glad for the adam optimizer
+            INIT_DIAG (int): 0/1 for initilization strategy of GLAD
+            L (int): Num of unrolled iterations of GLAD
+            verbose (bool): Print training output
+
+        Returns:
+            compare_theta (list[dict]): Dictionary of comparison metrics
+                between the predicted and true precision matrices
+        """
+        print(f'Running uGLAD in multi-task mode')
+        start = time()
+        Xb = np.array(Xb)
+        # Running the uGLAD model
+        pred_theta, compare_theta, model_glad = run_uGLAD_multitask(
+            Xb,
+            trueTheta=true_theta_b,
+            eval_offset=eval_offset,
+            EPOCHS=epochs, 
+            lr=lr,
+            INIT_DIAG=INIT_DIAG,
+            L=L,
+            VERBOSE=verbose, 
+            )
+
+        # np.dot((X-mu)T, (X-mu)) / X.shape[0]
+        self.covariance_ = []
+        for b in range(Xb.shape[0]):
+            self.covariance_.append(
+                covariance.empirical_covariance(
+                Xb[b],
+                assume_centered=centered
+                )
+            )
+        self.covariance_ = np.array(self.covariance_)
+        self.precision_ = pred_theta.detach().numpy()
+        self.model_glad = model_glad
+        print(f'Total runtime: {time()-start} secs\n')
+        return compare_theta
 #####################################################################
 
 
@@ -593,6 +669,91 @@ def get_final_precision_from_batch(predTheta, type='min'):
     # Get the final precision matrix
     predTheta = max_count_sign * value_term
     return predTheta.reshape(1, D, D)
+
+
+def run_uGLAD_multitask(
+    Xb, 
+    trueTheta=None, 
+    eval_offset=0.1, 
+    EPOCHS=250,
+    lr=0.002,
+    INIT_DIAG=0,
+    L=15,
+    VERBOSE=True,
+    ):
+    """Running the uGLAD algorithm in multitask mode. We
+    train using multi-task learning approach to obtain 
+    the final precision matrices for the batch of input data
+    
+    Args:
+        Xb (torch.Tensor KxMxD): The input sample matrix 
+        trueTheta (torch.Tensor KxDxD): The corresponding 
+            true graphs for reporting metrics
+        eval_offset (float): eigenvalue offset for 
+            covariance matrix adjustment
+        EPOCHS (int): The number of training epochs
+        lr (float): Learning rate of glad for the adam optimizer
+        INIT_DIAG (int): 0/1 for initilization strategy of GLAD
+        L (int): Num of unrolled iterations of GLAD
+        VERBOSE (bool): if True, prints to sys.out
+
+    Returns:
+        predTheta (torch.Tensor BxDxD): Predicted graphs
+        compare_theta (dict): returns comparison metrics if 
+            true precision matrix is provided
+        model_glad (class object): Returns the learned glad model
+    """
+    K, M, D = Xb.shape
+    # Getting the batches and preparing data for uGLAD
+    Sb = prepare_data.getCovariance(Xb, offset=eval_offset)
+    Sb = prepare_data.convertToTorch(Sb, req_grad=False)
+    # Initialize the model and prepare theta if provided
+    if trueTheta is not None:
+        trueTheta = prepare_data.convertToTorch(
+            trueTheta,
+            req_grad=False
+            )
+    # model and optimizer for uGLAD
+    model_glad, optimizer_glad = init_uGLAD(
+        lr=lr,
+        theta_init_offset=1.0,
+        nF=3,
+        H=3
+        )
+
+    # Optimizing for the glasso loss
+    PRINT_EVERY = int(EPOCHS/10)
+    # print max 10 times per training
+    for e in range(EPOCHS):      
+        # reset the grads to zero
+        optimizer_glad.zero_grad()
+        # calculate the loss and precision matrix
+        predTheta, loss = forward_uGLAD(
+            Sb, 
+            model_glad,
+            L=L,
+            INIT_DIAG=INIT_DIAG
+            )
+        # calculate the backward gradients
+        loss.backward()
+        # updating the optimizer params with the grads
+        optimizer_glad.step()
+        # Printing output
+        _loss = loss.detach().numpy()
+        if not e%PRINT_EVERY and VERBOSE: print(f'epoch:{e}/{EPOCHS} loss:{_loss}')
+        
+    # reporting the metrics if true theta is provided
+    compare_theta = []
+    if trueTheta is not None: 
+        for b in range(K):
+            compare_theta.append(
+                reportMetrics(
+                    trueTheta[b].detach().numpy(), 
+                    predTheta[b].detach().numpy()
+                )
+            )
+            print(f'Comparison {b} - {compare_theta}\n')
+    return predTheta, compare_theta, model_glad
 ######################################################################
 
 # DO NOT USE 
