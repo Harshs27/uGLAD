@@ -157,7 +157,7 @@ def init_uGLAD(lr, theta_init_offset=1.0, nF=3, H=3):
     return model, optimizer
 
 
-def forward_uGLAD(Sb, model_glad, L=15, INIT_DIAG=0):
+def forward_uGLAD(Sb, model_glad, L=15, INIT_DIAG=0, loss_Sb=None):
     """Run the input through the unsupervised GLAD algorithm.
     It executes the following steps in batch mode
     1. Run the GLAD model to get predicted precision matrix
@@ -168,6 +168,9 @@ def forward_uGLAD(Sb, model_glad, L=15, INIT_DIAG=0):
         model_glad (dict): Contains the learnable params
         L (int): Num of unrolled iterations of GLAD
         INIT_DIAG (int): 0/1 for initilization strategy of GLAD
+        loss_Sb (torch.Tensor BxDxD): The input covariance matrix 
+            against which loss is calculated. If None, then use
+            the input covariance matrix Sb
     
     Returns:
         predTheta (torch.Tensor BxDxD): The predicted theta
@@ -176,7 +179,10 @@ def forward_uGLAD(Sb, model_glad, L=15, INIT_DIAG=0):
     # 1. Running the GLAD model 
     predTheta = glad.glad(Sb, model_glad, L=L, INIT_DIAG=INIT_DIAG)
     # 2. Calculate the glasso-loss
-    loss = loss_uGLAD(predTheta, Sb)
+    if loss_Sb is None:
+        loss = loss_uGLAD(predTheta, Sb)
+    else:
+        loss = loss_uGLAD(predTheta, loss_Sb)
     return predTheta, loss
 
 
@@ -500,7 +506,8 @@ def run_uGLAD_missing(
             S_K, 
             model_glad,
             L=L,
-            INIT_DIAG=INIT_DIAG
+            INIT_DIAG=INIT_DIAG, 
+            loss_Sb=Sb
             )
         # calculate the backward gradients
         loss.backward()
@@ -560,7 +567,7 @@ def get_final_precision_from_batch(predTheta, type='min'):
     \Theta^{f}_{i,j} = max-count(sign(\Theta^K_{i,j})) 
                         * min/mean{|\Theta^K_{i,j}|}
     (`min` is the recommended setting) 
-    
+
     Args:
         predTheta (torch.Tensor KxDxD): Predicted graphs
             with batch_size = K
