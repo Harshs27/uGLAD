@@ -159,8 +159,9 @@ class uGLAD_multitask(object):
         covariance and precision matrices.
         
         Args:
-            X (3D np array): batch x num_samples x dimension
-            true_theta (3D np array): batch x dim x dim of the 
+            Xb (list of 2D np.array): batch * [num_samples' x dimension]
+                NOTE: num_samples can be different for different data
+            true_theta (3D np.array): batch x dim x dim of the 
                 true precision matrix
             eval_offset (float): eigenval adjustment in
                 case the cov is ill-conditioned
@@ -178,7 +179,6 @@ class uGLAD_multitask(object):
         """
         print(f'Running uGLAD in multi-task mode')
         start = time()
-        Xb = np.array(Xb)
         # Running the uGLAD model
         pred_theta, compare_theta, model_glad = run_uGLAD_multitask(
             Xb,
@@ -193,7 +193,7 @@ class uGLAD_multitask(object):
 
         # np.dot((X-mu)T, (X-mu)) / X.shape[0]
         self.covariance_ = []
-        for b in range(Xb.shape[0]):
+        for b in range(len(Xb)):
             self.covariance_.append(
                 covariance.empirical_covariance(
                 Xb[b],
@@ -302,9 +302,9 @@ def run_uGLAD_direct(
     """Running the uGLAD algorithm in direct mode
     
     Args:
-        Xb (torch.Tensor 1xMxD): The input sample matrix
-        trueTheta (torch.Tensor 1xDxD): The corresponding 
-            true graphs for reporting metrics
+        Xb (np.array 1xMxD): The input sample matrix
+        trueTheta (np.array 1xDxD): The corresponding 
+            true graphs for reporting metrics or None
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
         lr (float): Learning rate of glad for the adam optimizer
@@ -383,9 +383,9 @@ def run_uGLAD_CV(
     model using 5-fold CV. 
     
     Args:
-        Xb (torch.Tensor 1xMxD): The input sample matrix
-        trueTheta (torch.Tensor 1xDxD): The corresponding 
-            true graphs for reporting metrics
+        Xb (np.array 1xMxD): The input sample matrix
+        trueTheta (np.array 1xDxD): The corresponding 
+            true graphs for reporting metrics or None
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
         EPOCHS (int): The number of training epochs
@@ -519,10 +519,10 @@ def run_uGLAD_missing(
     learning approach to obtain the final precision matrix.
     
     Args:
-        Xb (torch.Tensor 1xMxD): The input sample matrix with 
+        Xb (np.array 1xMxD): The input sample matrix with 
             missing entries as np.NaNs
-        trueTheta (torch.Tensor 1xDxD): The corresponding 
-            true graphs for reporting metrics
+        trueTheta (np.array 1xDxD): The corresponding 
+            true graphs for reporting metrics or None
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
         EPOCHS (int): The number of training epochs
@@ -570,7 +570,6 @@ def run_uGLAD_missing(
         nF=3,
         H=3
         )
-
     # STEP III: Optimizing for the glasso loss
     PRINT_EVERY = int(EPOCHS/10)
     # print max 10 times per training
@@ -686,9 +685,10 @@ def run_uGLAD_multitask(
     the final precision matrices for the batch of input data
     
     Args:
-        Xb (torch.Tensor KxMxD): The input sample matrix 
-        trueTheta (torch.Tensor KxDxD): The corresponding 
-            true graphs for reporting metrics
+        Xb (list of 2D np.array):  The input sample matrix K * [M' x D]
+            NOTE: num_samples can be different for different data
+        trueTheta (np.array KxDxD): The corresponding 
+            true graphs for reporting metrics or None
         eval_offset (float): eigenvalue offset for 
             covariance matrix adjustment
         EPOCHS (int): The number of training epochs
@@ -703,7 +703,7 @@ def run_uGLAD_multitask(
             true precision matrix is provided
         model_glad (class object): Returns the learned glad model
     """
-    K, M, D = Xb.shape
+    K = len(Xb)
     # Getting the batches and preparing data for uGLAD
     Sb = prepare_data.getCovariance(Xb, offset=eval_offset)
     Sb = prepare_data.convertToTorch(Sb, req_grad=False)
@@ -720,7 +720,6 @@ def run_uGLAD_multitask(
         nF=3,
         H=3
         )
-
     # Optimizing for the glasso loss
     PRINT_EVERY = int(EPOCHS/10)
     # print max 10 times per training
