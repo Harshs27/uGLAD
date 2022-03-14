@@ -5,6 +5,7 @@ loss function.
 """
 import copy
 import numpy as np
+import pandas as pd
 from sklearn import covariance
 from sklearn.model_selection import KFold
 import sys
@@ -71,6 +72,12 @@ class uGLAD_GL(object):
         """
         print(f'Running uGLAD')
         start = time()
+        print(f'Processing the input table for basic compatibility check')
+        X = prepare_data.process_table(
+            pd.DataFrame(X), 
+            NORM='min_max', 
+            VERBOSE=verbose
+        )
         X = np.array(X)
         # Running the uGLAD model
         M, D = X.shape
@@ -179,6 +186,16 @@ class uGLAD_multitask(object):
         """
         print(f'Running uGLAD in multi-task mode')
         start = time()
+        print(f'Processing the input table for basic compatibility check')
+        processed_Xb = []
+        for X in Xb:
+            X = prepare_data.process_table(
+                pd.DataFrame(X), 
+                NORM='min_max', 
+                VERBOSE=verbose
+            )
+            processed_Xb.append(np.array(X))
+        Xb = processed_Xb
         # Running the uGLAD model
         pred_theta, compare_theta, model_glad = run_uGLAD_multitask(
             Xb,

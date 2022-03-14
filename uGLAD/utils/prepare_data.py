@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+import pandas as pd
 from sklearn import covariance
 import torch
 
@@ -213,3 +214,109 @@ def simulateGaussianSamples(
         size=num_samples
         )
     return data, precision_mat  # MxD, DxD
+
+############## Functions to check the input ########
+
+# Processing the input data to be compatiable for the sparse graph recovery models
+def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
+    """Processing the input data to be compatiable for the
+    sparse graph recovery models. Checks for the following
+    issues in the input tabular data (real values only).
+
+    Note: The order is important. Repeat the function
+    twice: process_table(process_table(table)) to ensure
+    the below conditions are satisfied.
+
+    1. Remove all the rows with zero entries
+    2. Fill Nans with column mean
+    3. Remove columns containing only a single entry
+    4. Remove columns with duplicate values
+    5. Remove columns with low variance after centering
+
+    The above steps are taken in order to ensure that the
+    input matrix is well-conditioned.
+
+    Args:
+        table (pd.DataFrame): The input table with headers
+        NORM (str): min_max/mean/no
+        MIN_VARIANCE (float): Drop the columns below this
+            variance threshold
+
+    Returns:
+        table (pd.DataFrame): The processed table with headers
+
+    """
+    if VERBOSE:
+        print(f'{msg}Processing the input table for basic compatibility check')
+        print(f'{msg}The input table has sample {table.shape[0]} and features {table.shape[1]}')
+    all_columns = table.columns
+    total_samples = table.shape[0]
+
+    # 1. Removing all the rows with zero entries as the samples are missing
+    table = table.loc[~(table==0).all(axis=1)]
+    if VERBOSE: print(f'{msg}Total zero samples dropped {total_samples - table.shape[0]}')
+
+    # 2. Fill nan's with mean of columns
+    table = table.fillna(table.mean())
+
+    # 3. Remove columns containing only a single value
+    single_value_columns = []
+    for col in table.columns:
+        if len(table[col].unique()) == 1:
+            single_value_columns.append(col)
+            table.drop(col, inplace=True, axis=1)
+    if VERBOSE: print(f'{msg}Single value columns dropped: total {len(single_value_columns)}, columns {single_value_columns}')
+
+    # Normalization of the input table
+    table = normalize_table(table, NORM)
+
+    # Analysing the input table's covariance matrix condition number
+    analyse_condition_number(table, 'Input', VERBOSE)
+ 
+    # 4. Remove columns with duplicate values
+    table = table.T.drop_duplicates().T  
+    duplicate_columns = list(set(all_columns) - set(table.columns))
+    if VERBOSE: print(f'{msg}Duplicates dropped: total {len(duplicate_columns)}, columns {duplicate_columns}')
+
+    # 5. Columns having similar variance have a slight chance that they might be almost duplicates
+    # which can affect the condition number of the covariance matrix.
+    # Also columns with low variance are less informative
+    table_var = table.var().sort_values(ascending=True)
+    # print(f'{msg}: Variance of the columns {table_var.to_string()}')
+    # Dropping the columns with variance < MIN_VARIANCE
+    low_variance_columns = list(table_var[table_var<MIN_VARIANCE].index)
+    table.drop(low_variance_columns, inplace=True, axis=1)
+    if VERBOSE: print(f'{msg}Low Variance columns dropped: min variance {MIN_VARIANCE}, total {len(low_variance_columns)}, columns {low_variance_columns}')
+
+    # Analysing the processed table's covariance matrix condition number
+    analyse_condition_number(table, 'Processed', VERBOSE)
+    if VERBOSE: print(f'{msg}The processed table has sample {table.shape[0]} and features {table.shape[1]}')
+    return table
+
+
+def analyse_condition_number(table, MESSAGE='', VERBOSE=True):
+    S = covariance.empirical_covariance(table, assume_centered=False)
+    eig, con = eig_val_condition_num(S)
+    if VERBOSE: print(f'{MESSAGE} covariance matrix: The condition number {con} and min eig {min(eig)} max eig {max(eig)}')
+    return
+     
+
+def eig_val_condition_num(A):
+    """Calculates the eigenvalues and the condition
+    number of the input matrix A
+
+    condition number = max(|eig|)/min(|eig|)
+    """
+    eig = [v.real for v in np.linalg.eigvals(A)]
+    condition_number = max(np.abs(eig)) / min(np.abs(eig))
+    return eig, condition_number
+
+
+def normalize_table(df, typeN):
+    if typeN == 'min_max':
+        return (df-df.min())/(df.max()-df.min())
+    elif typeN == 'mean':
+        return (df-df.mean())/df.std()
+    else:
+        print(f'No Norm applied : Type entered {typeN}')
+        return df
