@@ -249,7 +249,7 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
     if VERBOSE:
         print(f'{msg}Processing the input table for basic compatibility check')
         print(f'{msg}The input table has sample {table.shape[0]} and features {table.shape[1]}')
-    all_columns = table.columns
+    
     total_samples = table.shape[0]
 
     # 1. Removing all the rows with zero entries as the samples are missing
@@ -264,7 +264,7 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
     for col in table.columns:
         if len(table[col].unique()) == 1:
             single_value_columns.append(col)
-            table.drop(col, inplace=True, axis=1)
+    table = table.drop(single_value_columns, axis=1)
     if VERBOSE: print(f'{msg}Single value columns dropped: total {len(single_value_columns)}, columns {single_value_columns}')
 
     # Normalization of the input table
@@ -274,6 +274,7 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
     analyse_condition_number(table, 'Input', VERBOSE)
  
     # 4. Remove columns with duplicate values
+    all_columns = table.columns
     table = table.T.drop_duplicates().T  
     duplicate_columns = list(set(all_columns) - set(table.columns))
     if VERBOSE: print(f'{msg}Duplicates dropped: total {len(duplicate_columns)}, columns {duplicate_columns}')
