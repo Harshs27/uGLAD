@@ -264,7 +264,7 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
     for col in table.columns:
         if len(table[col].unique()) == 1:
             single_value_columns.append(col)
-    table = table.drop(single_value_columns, axis=1)
+    table.drop(single_value_columns, inplace=True, axis=1)
     if VERBOSE: print(f'{msg}Single value columns dropped: total {len(single_value_columns)}, columns {single_value_columns}')
 
     # Normalization of the input table
