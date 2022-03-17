@@ -252,6 +252,9 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
     
     total_samples = table.shape[0]
 
+    # typecast the table to floats
+    table = table._convert(numeric=True)
+
     # 1. Removing all the rows with zero entries as the samples are missing
     table = table.loc[~(table==0).all(axis=1)]
     if VERBOSE: print(f'{msg}Total zero samples dropped {total_samples - table.shape[0]}')
