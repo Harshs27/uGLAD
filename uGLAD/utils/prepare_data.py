@@ -124,7 +124,7 @@ def getCovariance(Xb, offset=0.1):
         S = covariance.empirical_covariance(X, assume_centered=False)
         # calculate the eigenvalue of the covariance S
         eig, con = eigVal_conditionNum(S)
-        if min(eig)<=1e-3:
+        if min(eig)<=1e-6:
             # adjust the eigenvalue
             print(f'Adjust the eval: min {min(eig)}, con {con}')
             S += np.eye(S.shape[-1]) * (offset-min(eig))
