@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 from sklearn import covariance
+from time import time
 import torch
 
 #################### Functions to generate data #####################
@@ -218,37 +219,35 @@ def simulateGaussianSamples(
 ############## Functions to check the input ########
 
 # Processing the input data to be compatiable for the sparse graph recovery models
-def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
-    """Processing the input data to be compatiable for the
+def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', COND_NUM=50, eigval_th=1e-3):
+    """Processing the input data to be compatiable for the 
     sparse graph recovery models. Checks for the following
     issues in the input tabular data (real values only).
-
-    Note: The order is important. Repeat the function
+    Note: The order is important. Repeat the function 
     twice: process_table(process_table(table)) to ensure
     the below conditions are satisfied.
-
     1. Remove all the rows with zero entries
     2. Fill Nans with column mean
     3. Remove columns containing only a single entry
     4. Remove columns with duplicate values
     5. Remove columns with low variance after centering
-
     The above steps are taken in order to ensure that the
-    input matrix is well-conditioned.
-
+    input matrix is well-conditioned. 
     Args:
         table (pd.DataFrame): The input table with headers
         NORM (str): min_max/mean/no
-        MIN_VARIANCE (float): Drop the columns below this
+        MIN_VARIANCE (float): Drop the columns below this 
             variance threshold
-
+        COND_NUM (int): The max condition number allowed
+        eigval_th (float): Min eigval threshold. Making sure 
+            that the min eigval is above this threshold by 
+            droppping highly correlated columns
     Returns:
         table (pd.DataFrame): The processed table with headers
-
     """
-    if VERBOSE:
-        print(f'{msg}Processing the input table for basic compatibility check')
-        print(f'{msg}The input table has sample {table.shape[0]} and features {table.shape[1]}')
+    start = time()
+    print(f'{msg}: Processing the input table for basic compatibility check')
+    print(f'{msg}: The input table has sample {table.shape[0]} and features {table.shape[1]}')
     
     total_samples = table.shape[0]
 
@@ -257,7 +256,7 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
 
     # 1. Removing all the rows with zero entries as the samples are missing
     table = table.loc[~(table==0).all(axis=1)]
-    if VERBOSE: print(f'{msg}Total zero samples dropped {total_samples - table.shape[0]}')
+    print(f'{msg}: Total zero samples dropped {total_samples - table.shape[0]}')
 
     # 2. Fill nan's with mean of columns
     table = table.fillna(table.mean())
@@ -268,41 +267,112 @@ def process_table(table, NORM='no', MIN_VARIANCE=0.0, msg='', VERBOSE=True):
         if len(table[col].unique()) == 1:
             single_value_columns.append(col)
     table.drop(single_value_columns, inplace=True, axis=1)
-    if VERBOSE: print(f'{msg}Single value columns dropped: total {len(single_value_columns)}, columns {single_value_columns}')
+    print(f'{msg}: Single value columns dropped: total {len(single_value_columns)}, columns {single_value_columns}')
 
     # Normalization of the input table
     table = normalize_table(table, NORM)
 
     # Analysing the input table's covariance matrix condition number
-    analyse_condition_number(table, 'Input', VERBOSE)
+    analyse_condition_number(table, 'Input')
  
     # 4. Remove columns with duplicate values
     all_columns = table.columns
     table = table.T.drop_duplicates().T  
     duplicate_columns = list(set(all_columns) - set(table.columns))
-    if VERBOSE: print(f'{msg}Duplicates dropped: total {len(duplicate_columns)}, columns {duplicate_columns}')
+    print(f'{msg}: Duplicates dropped: total {len(duplicate_columns)}, columns {duplicate_columns}')
 
-    # 5. Columns having similar variance have a slight chance that they might be almost duplicates
-    # which can affect the condition number of the covariance matrix.
+    # 5. Columns having similar variance have a slight chance that they might be almost duplicates 
+    # which can affect the condition number of the covariance matrix. 
     # Also columns with low variance are less informative
     table_var = table.var().sort_values(ascending=True)
     # print(f'{msg}: Variance of the columns {table_var.to_string()}')
     # Dropping the columns with variance < MIN_VARIANCE
     low_variance_columns = list(table_var[table_var<MIN_VARIANCE].index)
     table.drop(low_variance_columns, inplace=True, axis=1)
-    if VERBOSE: print(f'{msg}Low Variance columns dropped: min variance {MIN_VARIANCE}, total {len(low_variance_columns)}, columns {low_variance_columns}')
+    print(f'{msg}: Low Variance columns dropped: min variance {MIN_VARIANCE},\
+    total {len(low_variance_columns)}, columns {low_variance_columns}')
 
     # Analysing the processed table's covariance matrix condition number
-    analyse_condition_number(table, 'Processed', VERBOSE)
-    if VERBOSE: print(f'{msg}The processed table has sample {table.shape[0]} and features {table.shape[1]}')
+    cov_table, eig, con = analyse_condition_number(table, 'Processed')
+
+    itr = 1
+    while con > COND_NUM: # ill-conditioned matrix
+        print(f'{msg}: {itr} Condition number is high {con}. \
+        Dropping the highly correlated features in the cov-table')
+        # Find the number of eig vals < eigval_th for the cov_table matrix.
+        # Rough indicator of the lower bound num of features that are highly correlated.
+        eig = np.array(sorted(eig))
+        lb_ill_cond_features = len(eig[eig<eigval_th])
+        print(f'Current lower bound on ill-conditioned features {lb_ill_cond_features}')
+        if lb_ill_cond_features == 0:
+            print(f'All the eig vals are > {eigval_th} and current cond num {con}')
+            if con > COND_NUM:
+                lb_ill_cond_features = 1
+            else:
+                break
+        highly_correlated_features = get_highly_correlated_features(cov_table)
+        # Extracting the minimum num of features making the cov_table ill-conditioned
+        highly_correlated_features = highly_correlated_features[
+            :min(lb_ill_cond_features, len(highly_correlated_features))
+        ]
+        # The corresponding column names
+        highly_correlated_columns = table.columns[highly_correlated_features]
+        print(f'{msg} {itr}: Highly Correlated features dropped {highly_correlated_columns}, \
+        {len(highly_correlated_columns)}')
+        # Dropping the columns
+        table.drop(highly_correlated_columns, inplace=True, axis=1)
+        # Analysing the processed table's covariance matrix condition number
+        cov_table, eig, con = analyse_condition_number(table, f'{msg} {itr}: Corr features dropped')
+        # Increasing the iteration number
+        itr += 1
+    print(f'{msg}: The processed table has sample {table.shape[0]} and features {table.shape[1]}')
+    print(f'{msg}: Total time to process the table {np.round(time()-start, 3)} secs')
     return table
 
 
-def analyse_condition_number(table, MESSAGE='', VERBOSE=True):
+def get_highly_correlated_features(input_cov):
+    """Taking the covariance of the input covariance matrix
+    to find the highly correlated features that makes the 
+    input cov matrix ill-conditioned.
+    Args:
+        input_cov (2D np.array): DxD matrix
+    Returns:
+        features_to_drop (np.array): List of indices to drop
+    """
+    cov2 = covariance.empirical_covariance(input_cov)
+    # mask the diagonal 
+    np.fill_diagonal(cov2, 0)
+    # Get the threshold for top 10% 
+    cov_upper = upper_tri_indexing(np.abs(cov2))
+    sorted_cov_upper = [i for i in sorted(enumerate(cov_upper), key=lambda x:x[1], reverse=True)]
+    th = sorted_cov_upper[int(0.1*len(sorted_cov_upper))][1]
+    # Getting the feature correlation dictionary
+    high_indices = np.transpose(np.nonzero(np.abs(cov2) >= th))
+    high_indices_dict = {}
+    for i in high_indices: # the upper triangular part
+        if i[0] in high_indices_dict:
+            high_indices_dict[i[0]].append(i[1])
+        else:
+            high_indices_dict[i[0]] = [i[1]]
+    # sort the features based on the number of other correlated features.
+    top_correlated_features = [[f, len(v)] for (f, v) in high_indices_dict.items()]
+    top_correlated_features.sort(key=lambda x: x[1], reverse=True)
+    top_correlated_features = np.array(top_correlated_features)
+    features_to_drop = top_correlated_features[:, 0] 
+    return features_to_drop
+
+
+def upper_tri_indexing(A):
+    m = A.shape[0]
+    r,c = np.triu_indices(m,1)
+    return A[r,c]
+
+
+def analyse_condition_number(table, MESSAGE=''):
     S = covariance.empirical_covariance(table, assume_centered=False)
     eig, con = eig_val_condition_num(S)
-    if VERBOSE: print(f'{MESSAGE} covariance matrix: The condition number {con} and min eig {min(eig)} max eig {max(eig)}')
-    return
+    print(f'{MESSAGE} covariance matrix: The condition number {con} and min eig {min(eig)} max eig {max(eig)}')
+    return S, eig, con
      
 
 def eig_val_condition_num(A):
