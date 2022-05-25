@@ -39,9 +39,9 @@ A minimalist working example of uGLAD. It is a good entry point to understand th
 ## Citation
 If you find this method useful, kindly cite the following 2 associated papers:
 
-- uGLAD:  
+- `uGLAD`: Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)
 
-- GLAD:  
+- `GLAD`:  
 @article{shrivastava2019glad,
   title={GLAD: Learning sparse graph recovery},
   author={Shrivastava, Harsh and Chen, Xinshi and Chen, Binghong and Lan, Guanghui and Aluru, Srinvas and Liu, Han and Song, Le},
