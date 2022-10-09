@@ -86,6 +86,90 @@ def add_noise_dropout(Xb, dropout=0.25):
         Xb_miss.append(X)
     return np.array(Xb_miss)
 ######################################################################
+#################### Functions to process data #####################
+
+# https://towardsdatascience.com/the-search-for-categorical-correlation-a1cf7f1888c9
+def cramers_v(x, y):
+    """
+    Calculate Cramers V statistic for categorial-categorial association.
+    Similarly to correlation, the output is in the range of [0,1], 
+    where 0 means no association and 1 is full association.
+    
+    Source: https://en.wikipedia.org/wiki/Cram%C3%A9r%27s_V
+    Cramer's V is used with accounting for Bias correction.
+    
+    Note: chi-square = 0 implies that Cramér’s V = 0
+    """
+    confusion_matrix = pd.crosstab(x,y)
+    chi2 = chi2_contingency(confusion_matrix)[0]
+    n = confusion_matrix.sum().sum()
+    phi2 = chi2/n
+    r,k = confusion_matrix.shape
+    phi2corr = max(0, phi2-((k-1)*(r-1))/(n-1))
+    rcorr = r-((r-1)**2)/(n-1)
+    kcorr = k-((k-1)**2)/(n-1)
+    num = phi2corr
+    denom = min((kcorr-1),(rcorr-1))
+    if denom==0:
+        return 0 # No association
+    return np.sqrt(num/denom)
+
+def correlation_ratio(categories, measurements):
+    """Finding correlation between categorical and numerical 
+    features. 
+    
+    Source: https://en.wikipedia.org/wiki/Correlation_ratio
+    """
+    fcat, _ = pd.factorize(categories)
+    cat_num = np.max(fcat)+1
+    y_avg_array = np.zeros(cat_num)
+    n_array = np.zeros(cat_num)
+    for i in range(0,cat_num):
+        cat_measures = measurements[np.argwhere(fcat == i).flatten()]
+        n_array[i] = len(cat_measures)
+        y_avg_array[i] = np.average(cat_measures)
+    y_total_avg = np.sum(np.multiply(y_avg_array,n_array))/np.sum(n_array)
+    numerator = np.sum(np.multiply(n_array,np.power(np.subtract(y_avg_array,y_total_avg),2)))
+    denominator = np.sum(np.power(np.subtract(measurements,y_total_avg),2))
+    if numerator == 0:
+        eta = 0.0
+    else:
+        eta = np.sqrt(numerator/denominator)
+    return eta
+
+def pairwise_cov_matrix(df, dtype):
+    """Calculate the covariance matrix using pairwise calculations.
+    Accounts for categorical, numerical & Real features. 
+    `Cat-Cat' association is calculated using cramers V statistic.
+    `Cat-Num' value is obtained using the correlation ratio.
+    `Num-Num' correlation is calculated using the Pearson coefficient.
+    
+    Args:
+        df (pd.DataFrame): The input data M(samples) x D(features)
+        dtype (dict): {'column': 'r'/'c'}, where r=real, c=cat 
+    Returns:
+        cov (pd.DataFrame): Covariance matrix DxD 
+    """
+    features = df.columns
+    D = len(features)
+    cov = np.zeros((D, D))
+    for i, fi in enumerate(features):
+        print(f'row feature {i, fi}')
+        for j, fj in enumerate(features):
+            # print(f'col feature {j, fj}')
+            if j>=i:
+                if dtype[fi]=='c' and dtype[fj]=='c':
+                    cov[i, j] = cramers_v(df[fi], df[fj])
+                elif dtype[fi]=='c' and dtype[fj]=='r':
+                    cov[i, j] = correlation_ratio(df[fi], df[fj])
+                elif dtype[fi]=='r' and dtype[fj]=='c':
+                    cov[i, j] = correlation_ratio(df[fj], df[fi])
+                elif dtype[fi]=='r' and dtype[fj]=='r':
+                    cov[i, j] = pearsonr(df[fi], df[fj])[0]
+                cov[j, i] = cov[i, j]  # cov is symmetric
+    # Convert to pd.Dataframe
+    cov = pd.DataFrame(cov, index=features, columns=features)
+    return cov
 
 
 def convertToTorch(data, req_grad=False, use_cuda=False):
