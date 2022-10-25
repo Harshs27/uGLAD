@@ -39,20 +39,20 @@ A minimalist working example of uGLAD. It is a good entry point to understand th
 ## Citation
 If you find this method useful, kindly cite the following 2 associated papers:
 
-- `uGLAD`: Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)
-@inproceedings{
-shrivastava2022a,
-title={A deep learning approach to recover conditional independence graphs},
-author={Harsh Shrivastava and Urszula Chajewska and Robin Abraham and Xinshi Chen},
-booktitle={NeurIPS 2022 Workshop: New Frontiers in Graph Learning},
-year={2022},
-url={https://openreview.net/forum?id=kEwzoI3Am4c}
-}
+- `uGLAD`: Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)  
+@inproceedings{  
+shrivastava2022a,  
+title={A deep learning approach to recover conditional independence graphs},  
+author={Harsh Shrivastava and Urszula Chajewska and Robin Abraham and Xinshi Chen},  
+booktitle={NeurIPS 2022 Workshop: New Frontiers in Graph Learning},  
+year={2022},  
+url={https://openreview.net/forum?id=kEwzoI3Am4c}  
+}  
 
 - `GLAD`:  
-@article{shrivastava2019glad,
-  title={GLAD: Learning sparse graph recovery},
-  author={Shrivastava, Harsh and Chen, Xinshi and Chen, Binghong and Lan, Guanghui and Aluru, Srinvas and Liu, Han and Song, Le},
-  journal={arXiv preprint arXiv:1906.00271},
-  year={2019}
-}
+@article{shrivastava2019glad,  
+  title={GLAD: Learning sparse graph recovery},  
+  author={Shrivastava, Harsh and Chen, Xinshi and Chen, Binghong and Lan, Guanghui and Aluru, Srinvas and Liu, Han and Song, Le},  
+  journal={arXiv preprint arXiv:1906.00271},  
+  year={2019}  
+}     
