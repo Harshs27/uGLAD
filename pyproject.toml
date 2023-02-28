@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "uGLAD"
+version = "0.0.1"
+authors = [
+  { name="Harsh Shrivastava", email="harshshrivastava111@gmail.com" },
+]
+description = "A deep unrolled architecture to recover conditional independence graphs. A better alternative to BCD and other graphical lasso solvers."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Harshs27/uGLAD"
+"Bug Tracker" = "https://github.com/Harshs27/uGLAD/issues"
+"Paper" = "https://openreview.net/pdf?id=kEwzoI3Am4c"
