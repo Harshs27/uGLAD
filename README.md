@@ -1,6 +1,9 @@
 ## uGLAD  
 Sparse graph recovery by optimizing deep unrolled networks. This work proposes `uGLAD` (Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)) which is a unsupervised version of a previous `GLAD` model (GLAD: Learning Sparse Graph Recovery (ICLR 2020 - [link](<https://openreview.net/forum?id=BkxpMTEtPB>)).  
 
+## Talk  
+https://www.youtube.com/watch?v=Mx9VSQJACsA
+
 Key benefits & features:  
 - Solution to Graphical Lasso: A better alternative to solve the Graphical Lasso problem as
     - The neural networks of the uGLAD enable adaptive choices of the hyperparameters which leads to better performance than the existing algorithms  
