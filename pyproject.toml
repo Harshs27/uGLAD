@@ -3,8 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "uGLAD"
-version = "0.0.1"
+name = "uGLAD-testing"
+version = "0.0.3"
 authors = [
   { name="Harsh Shrivastava", email="harshshrivastava111@gmail.com" },
 ]
@@ -16,6 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = ["numpy"]
 
 [project.urls]
 "Homepage" = "https://github.com/Harshs27/uGLAD"
