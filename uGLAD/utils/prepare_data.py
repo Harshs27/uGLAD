@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import pandas as pd
+from scipy.stats import chi2_contingency, pearsonr
 from sklearn import covariance
 from time import time
 import torch
