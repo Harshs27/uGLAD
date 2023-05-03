@@ -898,6 +898,10 @@ def get_interactive_graph(G, title='', node_PREFIX='ObsVal'):
 
 
 def viz_graph_from_precision(theta, feature_names, sparsity=0.1, title=''):
+    """
+    Visualizing the CI graph
+    theta = model.precision_ (obtaining theta from GLAD model)
+    """
     rho = get_partial_correlations(theta)
     Gr, _, _ = graph_from_partial_correlations(
         rho, 
