@@ -12,6 +12,8 @@ import sys
 from time import time
 import torch
 
+import io
+import matplotlib.pyplot as plt
 import networkx as nx
 from pyvis import network as net
 # Helper functions for uGLAD
