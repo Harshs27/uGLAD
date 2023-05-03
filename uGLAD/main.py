@@ -12,6 +12,8 @@ import sys
 from time import time
 import torch
 
+import networkx as nx
+from pyvis import network as net
 # Helper functions for uGLAD
 from uGLAD.glad.glad_params import glad_params
 from uGLAD.glad import glad
@@ -769,6 +771,142 @@ def run_uGLAD_multitask(
             print(f'Metrics for graph {b}: {rM}\n')
             compare_theta.append(rM)
     return predTheta, compare_theta, model_glad
+
+#################################################################
+### Functions to get partial correlation matrix and visualization
+
+
+def get_partial_correlations(precision):
+    """Get the partial correlation matrix from the 
+    precision matrix. It applies the following 
+    
+    Formula: rho_ij = -p_ij/sqrt(p_ii * p_jj)
+    
+    Args:
+        precision (2D np.array): The precision matrix
+    
+    Returns:
+        rho (2D np.array): The partial correlations
+    """
+    precision = np.array(precision)
+    D = precision.shape[0]
+    rho = np.zeros((D, D))
+    for i in range(D): # rows
+        for j in range(D): # columns
+            if i==j: # diagonal elements
+                rho[i][j] = 1
+            elif j < i: # symmetric
+                rho[i][j] = rho[j][i]
+            else: # i > j
+                num = -1*precision[i][j]
+                den = np.sqrt(precision[i][i]*precision[j][j])
+                rho[i][j] = num/den
+    return rho
+
+
+# Plot the graph
+def graph_from_partial_correlations( 
+    rho, 
+    names, # node names
+    sparsity=1,
+    title='', 
+    fig_size=12, 
+    PLOT=True,
+    save_file=None,
+    roundOFF=5
+    ):
+    G = nx.Graph()
+    G.add_nodes_from(names)
+    D = rho.shape[-1]
+
+    # determining the threshold to maintain the sparsity level of the graph
+    def upper_tri_indexing(A):
+        m = A.shape[0]
+        r,c = np.triu_indices(m,1)
+        return A[r,c]
+
+    rho_upper = upper_tri_indexing(np.abs(rho))
+    num_non_zeros = int(sparsity*len(rho_upper))
+    rho_upper.sort()
+    th = rho_upper[-num_non_zeros]
+    # print(f'Sparsity {sparsity} using threshold {th}')
+    th_pos, th_neg = th, -1*th
+
+    graph_edge_list = []
+    for i in range(D):
+        for j in range(i+1, D):
+            if rho[i,j] > th_pos:
+                G.add_edge(names[i], names[j], color='green', weight=round(rho[i,j], roundOFF), label='+')
+                _edge = '('+names[i]+', '+names[j]+', '+str(round(rho[i,j], roundOFF))+', green)'
+                graph_edge_list.append(_edge)
+            elif rho[i,j] < th_neg:
+                G.add_edge(names[i], names[j], color='red', weight=round(rho[i,j], roundOFF), label='-')
+                _edge = '('+names[i]+', '+names[j]+', '+str(round(rho[i,j], roundOFF))+', red)'
+                graph_edge_list.append(_edge)
+
+    # if PLOT: print(f'graph edges {graph_edge_list, len(graph_edge_list)}')
+
+    edge_colors = [G.edges[e]['color'] for e in G.edges]
+    edge_width = np.array([abs(G.edges[e]['weight']) for e in G.edges])
+    # Scaling the intensity of the edge_weights for viewing purposes
+    if len(edge_width) > 0:
+        edge_width = edge_width/np.max(np.abs(edge_width))
+    image_bytes = None
+    if PLOT:
+        fig = plt.figure(1, figsize=(fig_size,fig_size))
+        plt.title(title)
+        n_edges = len(G.edges())
+        pos = nx.spring_layout(G, scale=0.2, k=1/np.sqrt(n_edges+10))
+        # pos = nx.nx_agraph.graphviz_layout(G, prog='fdp') #'fdp', 'sfdp', 'neato'
+        nx.draw_networkx_nodes(G, pos, node_color='grey', node_size=100)
+        nx.draw_networkx_edges(G, pos, edge_color=edge_colors, width=edge_width)
+        y_off = 0.008
+        nx.draw_networkx_labels(G, pos = {k:([v[0], v[1]+y_off]) for k,v in pos.items()})
+        plt.title(f'{title}', fontsize=20)
+        plt.margins(0.15)
+        plt.tight_layout()
+        # saving the file
+        if save_file:
+            plt.savefig(save_file, bbox_inches='tight')
+        # Saving the figure in-memory
+        buf = io.BytesIO()
+        plt.savefig(buf)
+        # getting the image in bytes
+        buf.seek(0)
+        image_bytes = buf.getvalue() # Image.open(buf, mode='r')
+        buf.close()
+        # closing the plt
+        plt.close(fig)
+    return G, image_bytes, graph_edge_list
+
+def get_interactive_graph(G, title='', node_PREFIX='ObsVal'):
+    Gv = net.Network(
+        notebook=True, 
+         height='750px', width='100%', 
+    #     bgcolor='#222222', font_color='white',
+        heading=title
+    )
+    Gv.from_nx(G.copy(), show_edge_weights=True, edge_weight_transf=(lambda x:x) )
+    for e in Gv.edges:
+        e['title'] = str(e['width'])
+        e['value'] = abs(e['width'])
+    if node_PREFIX is not None:
+        for n in Gv.nodes:
+            n['title'] = node_PREFIX+':'+n['category']
+    Gv.show_buttons()
+    return Gv
+
+
+def viz_graph_from_precision(theta, feature_names, sparsity=0.1, title=''):
+    rho = get_partial_correlations(theta)
+    Gr, _, _ = graph_from_partial_correlations(
+        rho, 
+        feature_names,
+        sparsity=sparsity
+    )
+    print(f'Num nodes: {len(Gr.nodes)}')
+    Gv = get_interactive_graph(Gr, title, node_PREFIX=None)
+    return Gr, Gv
 ######################################################################
 
 # DO NOT USE 
