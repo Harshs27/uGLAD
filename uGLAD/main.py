@@ -906,6 +906,7 @@ def viz_graph_from_precision(theta, feature_names, sparsity=0.1, title=''):
     )
     print(f'Num nodes: {len(Gr.nodes)}')
     Gv = get_interactive_graph(Gr, title, node_PREFIX=None)
+    # visualize using Gv.show('viz.html')
     return Gr, Gv
 ######################################################################
 
