@@ -18,5 +18,8 @@ conda install -c anaconda pandas networkx scipy -y;
 # Install pip packages
 pip3 install -U scikit-learn
 
+# Pyvis installation
+pip install pyvis
+
 # Create environment.yml.
 conda env export > environment.yml;
