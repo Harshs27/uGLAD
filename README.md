@@ -33,8 +33,10 @@ Key benefits & features:
 <img src=".images/architecture.PNG" alt="drawing" width="200"/>   -->
 
 ## Setup  
-The `setup.sh` file contains the complete procedure of creating a conda environment to run mGLAD model. run `bash setup.sh`    
-In case of dependencies conflict, one can alternatively use this command `conda env create --name uGLAD --file=environment.yml`.  
+The `setup.sh` file contains the complete procedure of creating a conda environment to run uGLAD model. 
+```bash
+bash setup.sh
+```
 
 ## demo-uGLAD notebook  
 A minimalist working example of uGLAD. It is a good entry point to understand the code structure as well as the uGLAD model.  
