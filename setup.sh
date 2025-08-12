@@ -1,7 +1,7 @@
 # Update the conda package. (optional)
 conda update -n base conda
 # Create conda environment.
-conda create -n uGLAD python=3.8 -y;
+conda create -n uGLAD python -y;
 conda activate uGLAD;
 conda install -c conda-forge notebook -y;
 python -m ipykernel install --user --name uGLAD;
