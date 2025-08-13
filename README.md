@@ -1,10 +1,21 @@
 ## uGLAD  
 Sparse graph recovery by optimizing deep unrolled networks. This work proposes `uGLAD` (Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)) which is a unsupervised version of a previous `GLAD` model (GLAD: Learning Sparse Graph Recovery (ICLR 2020 - [link](<https://openreview.net/forum?id=BkxpMTEtPB>)).  
 
+## Table of Contents
+- [uGLAD](#uglad)
+- [Talk](#talk)
+- [Key Benefits & Features](#key-benefits--features)
+- [uGLAD Architecture: Unrolled Deep Model](#uglad-architecture-unrolled-deep-model)
+- [Setup](#setup)
+  - [Users](#users)
+  - [Developers](#developers)
+- [demo-uGLAD Notebook](#demo-uglad-notebook)
+- [Citation](#citation)
+
 ## Talk  
 https://www.youtube.com/watch?v=Mx9VSQJACsA
 
-Key benefits & features:  
+## Key Benefits & Features
 - Solution to Graphical Lasso: A better alternative to solve the Graphical Lasso problem as
     - The neural networks of the uGLAD enable adaptive choices of the hyperparameters which leads to better performance than the existing algorithms  
      - No need to pre-specify the sparsity related regularization hyperparameters  
@@ -15,7 +26,7 @@ Key benefits & features:
 - Glasso loss function: The loss is the logdet objective of the graphical lasso `1/M(-1*log|theta|+ <S, theta>)`, where `M=num_samples, S=input covariance matrix, theta=predicted precision matrix`.  
 - Ease of usability: Matches the I/O signature of `sklearn GraphicalLassoCV`, so easy to plug-in to the existing code.  
 
-### uGLAD architecture: Unrolled deep model
+## uGLAD Architecture: Unrolled Deep Model
 
 <p align="center">
   <img src="https://github.com/Harshs27/uGLAD/blob/main/.images/architecture.PNG" width="100" title="uGLAD architecture: Unrolled deep model" />
@@ -44,7 +55,7 @@ A minimalist working example of uGLAD is given in `examples/demo-uGLAD.ipynb` no
 ## Citation
 If you find this method useful, kindly cite the following 2 associated papers:
 
-- `uGLAD`: Sparse graph recovery by optimizing deep unrolled networks. [arxiv](<https://arxiv.org/abs/2205.11610>)  
+- `uGLAD`: [arxiv](<https://arxiv.org/abs/2205.11610>)  
 @inproceedings{  
 shrivastava2022a,  
 title={A deep learning approach to recover conditional independence graphs},  
