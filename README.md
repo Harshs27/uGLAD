@@ -32,7 +32,7 @@ bash setup.sh
 ```
 
 ## demo-uGLAD notebook  
-A minimalist working example of uGLAD. It is a good entry point to understand the code structure as well as the uGLAD model.  
+A minimalist working example of uGLAD is given in `examples/demo-uGLAD.ipynb` notebook. It is a good entry point to understand the code structure as well as the uGLAD model.  
 
 ## Citation
 If you find this method useful, kindly cite the following 2 associated papers:
