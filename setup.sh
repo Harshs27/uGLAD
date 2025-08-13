@@ -1,10 +1,10 @@
 # Update the conda package. (optional)
 conda update -n base conda
 # Create conda environment.
-conda create -n uGLAD python -y;
-conda activate uGLAD;
+conda create -n uglad python -y;
+conda activate uglad;
 conda install -c conda-forge notebook -y;
-python -m ipykernel install --user --name uGLAD;
+python -m ipykernel install --user --name uglad;
 
 # Install pytorch
 conda install numpy -y;

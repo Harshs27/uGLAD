@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch import Tensor
 from torch.optim import Adam, Optimizer
 
-from uGLAD.glad.torch_sqrtm import MatrixSquareRoot
+from uglad.glad.torch_sqrtm import MatrixSquareRoot
 
 torch_sqrtm = MatrixSquareRoot.apply
 

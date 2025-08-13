@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "uGLAD"
+name = "uglad"
 version = "2.0.0"
 authors = [
   { name="Harsh Shrivastava", email="harshshrivastava111@gmail.com" },
@@ -31,6 +31,6 @@ dependencies = [
 dev = ["notebook", "ipykernel"]
 
 [project.urls]
-"Homepage" = "https://github.com/Harshs27/uGLAD"
-"Bug Tracker" = "https://github.com/Harshs27/uGLAD/issues"
+"Homepage" = "https://github.com/Harshs27/uglad"
+"Bug Tracker" = "https://github.com/Harshs27/uglad/issues"
 "Paper" = "https://arxiv.org/abs/2205.11610"

@@ -25,7 +25,14 @@ Key benefits & features:
   <img src="https://github.com/Harshs27/uGLAD/blob/main/.images/nn-architecture1.PNG" width="300" title="uGLAD architecture: Neural Network details" />
 </p>
 
-## Setup  
+## Setup 
+### Users
+
+```bash
+pip install uglad
+```
+
+### Developers
 The `setup.sh` file contains the complete procedure of creating a conda environment to run uGLAD model. 
 ```bash
 bash setup.sh
