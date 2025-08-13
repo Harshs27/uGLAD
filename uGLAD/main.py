@@ -22,12 +22,12 @@ from scipy.stats import multivariate_normal
 from sklearn import covariance
 from sklearn.model_selection import KFold
 
-import uGLAD.utils.prepare_data as prepare_data
-from uGLAD.glad import glad
+import uglad.utils.prepare_data as prepare_data
+from uglad.glad import glad
 
 # Helper functions for uGLAD
-from uGLAD.glad.glad_params import GladParams
-from uGLAD.utils.metrics import report_metrics_all
+from uglad.glad.glad_params import GladParams
+from uglad.utils.metrics import report_metrics_all
 
 
 # Wrapper class to match sklearn package #############
